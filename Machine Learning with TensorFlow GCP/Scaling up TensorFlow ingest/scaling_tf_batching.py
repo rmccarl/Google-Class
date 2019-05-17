@@ -13,6 +13,11 @@ This is a temporary script file.
 """
 
 import tensorflow as tf
+import tensorflow.contrib.eager as tfe
+tf.enable_eager_execution()
+
+
+
 import numpy as np
 import shutil
 
@@ -36,11 +41,11 @@ def do_it():
     
       # Create list of file names that match "glob" pattern (i.e. data_file_*.csv)
       filenames_dataset = tf.data.Dataset.list_files(filename, shuffle=False)
-      for x in filenames_dataset:
-          print(x)
+      print(filenames_dataset._tensors)
       
       # Read lines from text files
       textlines_dataset = filenames_dataset.flat_map(tf.data.TextLineDataset)
+      
       # Parse text lines as comma-separated values (CSV)
       dataset = textlines_dataset.map(decode_csv)
     
@@ -84,9 +89,11 @@ def do_it():
     
     tf.executing_eagerly()
     
+    input_fn = get_train_input_fn()
+    
     model = tf.estimator.LinearRegressor(
           feature_columns = feature_cols, model_dir = OUTDIR)
-    model.train(input_fn = get_train_input_fn, steps = 200)
+    model.train(input_fn = input_fn, steps = 200)
     
     metrics = model.evaluate(input_fn = get_valid_input_fn, steps = None)
     print('RMSE on dataset = {}'.format(np.sqrt(metrics['average_loss'])))
@@ -95,17 +102,11 @@ def do_it():
 
 
 def main():
-  tf.enable_eager_execution()
+
   do_it()
   return
 
 
 if __name__ == "__main__":
     main()
-#
-#tf.enable_eager_execution()
-#
-#tf.executing_eagerly()
-#filenames_dataset = tf.data.Dataset.list_files(r'./*.csv', shuffle=False)
-#test = filenames_dataset._tensors
-#print(test)
+
